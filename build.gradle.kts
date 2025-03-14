@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.koin.logger.slf4j)
     implementation(libs.ktor.server.netty)
     implementation(libs.logback.classic)
+    implementation(libs.logstash.logback.encoder)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.prometheus.client)
     implementation(libs.prometheus.hotspot)
