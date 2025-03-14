@@ -1,1 +1,1 @@
-rootProject.name = "bucket-upload"
+rootProject.name = "sykmelding-bucket-upload"
