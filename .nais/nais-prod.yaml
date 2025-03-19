@@ -40,3 +40,6 @@ spec:
         - id: elastic
   kafka:
     pool: nav-prod
+  env:
+    - name: BUCKET_NAME
+      value: tsm-sykmelding-prod

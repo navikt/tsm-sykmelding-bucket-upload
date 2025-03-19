@@ -1,4 +1,4 @@
-package no.nav.tsm.sykmelding
+package no.nav.tsm
 
 import io.ktor.server.application.Application
 import io.ktor.server.routing.routing

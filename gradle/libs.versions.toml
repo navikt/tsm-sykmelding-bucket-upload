@@ -6,6 +6,9 @@ ktor-version = "3.1.1"
 logback-version = "1.5.16"
 prometheus_version = "0.16.0"
 logstash_encoder_version = "8.0"
+google_storage_version = "2.50.0"
+kafka_version = "3.9.0"
+jacksonVersion = "2.18.2"
 
 [libraries]
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor-version" }
@@ -21,6 +24,10 @@ kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version
 prometheus-hotspot = { module = "io.prometheus:simpleclient_hotspot", version.ref = "prometheus_version" }
 prometheus-client = { module = "io.prometheus:simpleclient_common", version.ref = "prometheus_version" }
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash_encoder_version" }
+google-cloud-storage = { module = "com.google.cloud:google-cloud-storage", version.ref = "google_storage_version" }
+apache-kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka_version"}
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonVersion" }
+jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jacksonVersion" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
