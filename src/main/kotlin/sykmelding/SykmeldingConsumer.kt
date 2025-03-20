@@ -4,15 +4,18 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toJavaDuration
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import io.prometheus.client.Counter
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import no.nav.tsm.utils.gzip
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 class SykmeldingConsumer(
     val kafkaConsumer: KafkaConsumer<String, String>,
@@ -22,9 +25,11 @@ class SykmeldingConsumer(
 ) {
 
     companion object {
+        private val logger = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
         private val STORAGE_METRIC = Counter.Builder()
             .namespace("tsm")
-            .name("sykmelding-bucket-upload")
+            .name("sykmelding_bucket_upload")
+            .help("counts number for files uploaded or not to gcp")
             .labelNames("type").create()
     }
 
@@ -34,6 +39,21 @@ class SykmeldingConsumer(
     }
 
     suspend fun start() = coroutineScope {
+        kafkaConsumer.subscribe(topics)
+        while (isActive) {
+            try {
+                consumeMessages()
+            } catch (ex: Exception) {
+                logger.error("Error processing messages", ex)
+                kafkaConsumer.unsubscribe()
+                delay(60.seconds)
+            }
+        }
+        kafkaConsumer.unsubscribe()
+    }
+
+    private suspend fun consumeMessages() = coroutineScope {
+        kafkaConsumer.subscribe(topics)
         while (isActive) {
             val records = kafkaConsumer.poll(10.seconds.toJavaDuration())
             records.forEach { record ->
@@ -46,6 +66,7 @@ class SykmeldingConsumer(
                 }
             }
         }
+
     }
 
     private fun deleteXml(sykmeldingId: String) {
@@ -57,11 +78,14 @@ class SykmeldingConsumer(
         if (fellesformat != null) {
             val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
                 .setContentType("application/xml")
+                .setContentEncoding("gzip")
                 .build()
-            storage.create(blob, fellesformat.encodeToByteArray())
+            val compressedData = gzip(fellesformat)
+            storage.create(blob, compressedData)
             STORAGE_METRIC.labels("upload").inc()
         } else {
             STORAGE_METRIC.labels("empty").inc()
         }
     }
+
 }

@@ -18,8 +18,9 @@ import java.util.Properties
 fun Application.configureFrameworks() {
     install(Koin) {
         slf4jLogger()
-        envModule()
-        kafkaModule()
+        modules(
+            kafkaModule()
+        )
     }
 }
 
@@ -42,6 +43,7 @@ fun kafkaModule() = module {
             this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1"
+            this[ConsumerConfig.GROUP_ID_CONFIG] = "sykmelding-bucket-upload-consumer"
         }
         val bucketName = getEnv("BUCKET_NAME")
         val storage = StorageOptions.newBuilder().build().service
@@ -51,11 +53,5 @@ fun kafkaModule() = module {
             bucketName = bucketName,
             storage = storage
         )
-    }
-}
-
-fun envModule() = module {
-    single {
-
     }
 }
