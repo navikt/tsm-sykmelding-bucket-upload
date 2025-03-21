@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.ktor)
 }
 
-group = "no.nav.tsm.sykmelding"
+group = "no.nav.tsm"
 version = "0.0.1"
 
 application {
@@ -30,6 +30,10 @@ dependencies {
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.prometheus.client)
     implementation(libs.prometheus.hotspot)
+    implementation(libs.google.cloud.storage)
+    implementation(libs.apache.kafka)
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.jackson.datatype.jsr310)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(libs.kotlin.test.junit)
 }
