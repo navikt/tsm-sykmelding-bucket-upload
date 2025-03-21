@@ -58,7 +58,7 @@ class SykmeldingConsumer(
             val records = kafkaConsumer.poll(10.seconds.toJavaDuration())
             records.forEach { record ->
                 val sykmeldingId = record.key()
-                val sykmeldingRecord: SykmeldingRecord? = record.value().let { objectMapper.readValue(it) }
+                val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
 
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
@@ -70,6 +70,7 @@ class SykmeldingConsumer(
     }
 
     private fun deleteXml(sykmeldingId: String) {
+        logger.info("deleting xml for sykmelding $sykmeldingId")
         storage.delete(BlobId.of(bucketName, sykmeldingId))
         STORAGE_METRIC.labels("delete").inc()
     }
