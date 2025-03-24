@@ -1,4 +1,4 @@
-FROM gcr.io/distroless/java21-debian12@sha256:69c841c01c293c13e22ccd3deac56a3e24fbb3862517b74eed3e4e15c36bce64
+FROM gcr.io/distroless/java21-debian12@sha256:bce78ee52879b0dcbecd23f8b6a33c5ee98943f6810f117e95aa69e14adb22ba
 WORKDIR /app
 COPY build/libs/sykmelding-bucket-upload-all.jar app.jar
 ENV JAVA_OPTS="-Dlogback.configurationFile=logback.xml"
