@@ -45,13 +45,15 @@ fun kafkaModule() = module {
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1"
             this[ConsumerConfig.GROUP_ID_CONFIG] = "sykmelding-bucket-upload-consumer"
         }
-        val bucketName = getEnv("BUCKET_NAME")
+        val bucketName = getEnv("TSM_SYKMELDING_BUCKET")
+        val bucketNamevedlegg = getEnv("SYKMELDING_VEDLEGG_BUCKET")
         val storage = StorageOptions.newBuilder().build().service
         SykmeldingConsumer(
             kafkaConsumer = KafkaConsumer<String, String>(properties),
             topics = listOf("tsm.teamsykmelding-sykmeldinger"),
             bucketName = bucketName,
-            storage = storage
+            storage = storage,
+            bucketNameVedlegg = bucketNamevedlegg
         )
     }
 }

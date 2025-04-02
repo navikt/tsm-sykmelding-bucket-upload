@@ -41,6 +41,8 @@ spec:
   kafka:
     pool: nav-dev
   env:
-    - name: BUCKET_NAME
-      value: tsm-sykmelding-dev
+    - name: TSM_SYKMELDING_BUCKET
+      value: sykmelding-bucket
+    - name: SYKMELDING_VEDLEGG_BUCKET
+      value: sykmelding-vedlegg-bucket
 
