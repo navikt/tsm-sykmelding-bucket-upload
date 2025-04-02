@@ -49,7 +49,7 @@ class SykmeldingConsumer(
             try {
                 consumeMessages()
             } catch (ex: Exception) {
-                logger.error("Error processing messages", ex)
+                logger.error("Error processing messages ${ex.stackTrace} ${ex.message}", ex)
                 kafkaConsumer.unsubscribe()
                 delay(60.seconds)
             }
@@ -81,26 +81,29 @@ class SykmeldingConsumer(
     }
 
     private fun uploadXml(sykmeldingId: String, fellesformat: String?, sykmeldingRecord: SykmeldingRecord) {
-        if (fellesformat == null) {
-            STORAGE_METRIC.labels("empty").inc()
-            return
-        }
-        val fellesFormatKanskjeMedVedlegg = if (sykmeldingRecord.vedlegg.isNotEmpty()) {
-            logger.info("legger til vedlegg $sykmeldingId")
-            val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
-            leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
-        } else {
-            fellesformat
-        }
-        logger.info("bucketname $bucketName")
+        try {
+            if (fellesformat == null) {
+                STORAGE_METRIC.labels("empty").inc()
+                return
+            }
+            val fellesFormatKanskjeMedVedlegg = if (sykmeldingRecord.vedlegg.isNotEmpty()) {
+                logger.info("legger til vedlegg $sykmeldingId")
+                val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
+                leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
+            } else {
+                fellesformat
+            }
 
-        val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
-            .setContentType("application/xml")
-            .setContentEncoding("gzip")
-            .build()
-        val compressedData = gzip(fellesFormatKanskjeMedVedlegg)
-        storage.create(blob, compressedData)
-        STORAGE_METRIC.labels("upload").inc()
+            val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
+                .setContentType("application/xml")
+                .setContentEncoding("gzip")
+                .build()
+            val compressedData = gzip(fellesFormatKanskjeMedVedlegg)
+            storage.create(blob, compressedData)
+            STORAGE_METRIC.labels("upload").inc()
+        } catch (ex: Exception) {
+            logger.error("Error deleting xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
+        }
     }
 
     private fun getVedlegg(key: String, sykmeldingId: String): String {
