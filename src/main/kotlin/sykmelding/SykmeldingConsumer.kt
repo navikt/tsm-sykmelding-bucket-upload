@@ -86,7 +86,7 @@ class SykmeldingConsumer(
                 STORAGE_METRIC.labels("empty").inc()
                 return
             }
-            val fellesFormatKanskjeMedVedlegg = if (sykmeldingRecord.vedlegg.isNotEmpty()) {
+            val fellesFormatKanskjeMedVedlegg = if (!sykmeldingRecord.vedlegg.isNullOrEmpty()) {
                 logger.info("legger til vedlegg $sykmeldingId")
                 val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
                 leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
