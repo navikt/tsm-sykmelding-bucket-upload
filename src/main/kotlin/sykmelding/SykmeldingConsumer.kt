@@ -64,7 +64,7 @@ class SykmeldingConsumer(
             records.forEach { record ->
                 val sykmeldingId = record.key()
                 val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
-                logger.info("Consumed sykmeldingId $sykmeldingId and sykmeldingRecord: $sykmeldingRecord")
+                logger.info("Consumed sykmeldingId $sykmeldingId ")
 
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
@@ -86,11 +86,13 @@ class SykmeldingConsumer(
             return
         }
         val fellesFormatKanskjeMedVedlegg = if (sykmeldingRecord.vedlegg.isNotEmpty()) {
+            logger.info("legger til vedlegg")
             val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
             leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
         } else {
             fellesformat
         }
+        logger.info("bucketname $bucketName")
 
         val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
             .setContentType("application/xml")
