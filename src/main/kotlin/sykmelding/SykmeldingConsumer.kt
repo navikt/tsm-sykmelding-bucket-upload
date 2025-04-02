@@ -86,7 +86,7 @@ class SykmeldingConsumer(
             return
         }
         val fellesFormatKanskjeMedVedlegg = if (sykmeldingRecord.vedlegg.isNotEmpty()) {
-            logger.info("legger til vedlegg")
+            logger.info("legger til vedlegg $sykmeldingId")
             val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
             leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
         } else {

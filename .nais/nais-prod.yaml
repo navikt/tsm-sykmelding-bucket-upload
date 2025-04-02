@@ -40,8 +40,6 @@ spec:
         - id: elastic
   kafka:
     pool: nav-prod
-  env:
-    - name: TSM_SYKMELDING_BUCKET
-      value: sykmelding-bucket
-    - name: SYKMELDING_VEDLEGG_BUCKET
-      value: sykmelding-vedlegg-bucket
+  envFrom:
+    - secret: sykmelding-bucket
+    - secret: sykmelding-vedlegg-bucket
