@@ -64,6 +64,7 @@ class SykmeldingConsumer(
             records.forEach { record ->
                 val sykmeldingId = record.key()
                 val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
+                logger.info("Consumed sykmeldingId $sykmeldingId and sykmeldingRecord: $sykmeldingRecord")
 
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
