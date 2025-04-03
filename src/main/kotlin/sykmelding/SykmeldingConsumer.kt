@@ -14,6 +14,7 @@ import kotlinx.coroutines.isActive
 import no.nav.tsm.sykmelding.model.VedleggMessage
 import no.nav.tsm.utils.gzip
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.StringWriter
 import javax.xml.bind.JAXBContext
@@ -31,6 +32,7 @@ class SykmeldingConsumer(
 
     companion object {
         private val logger = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
+        val securelog: Logger = LoggerFactory.getLogger("securelog")
         private val STORAGE_METRIC = Counter.Builder()
             .namespace("tsm")
             .name("sykmelding_bucket_upload")
@@ -65,7 +67,7 @@ class SykmeldingConsumer(
                 val sykmeldingId = record.key()
                 val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
                 logger.info("Consumed sykmeldingId $sykmeldingId ")
-
+                securelog.info("Consumed sykmeldingId $sykmeldingId")
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
                     else -> uploadXml(sykmeldingId, sykmeldingRecord.fellesformat, sykmeldingRecord)
@@ -89,7 +91,8 @@ class SykmeldingConsumer(
             val fellesFormatKanskjeMedVedlegg = if (!sykmeldingRecord.vedlegg.isNullOrEmpty()) {
                 logger.info("legger til vedlegg $sykmeldingId")
                 val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
-                leggTilVedleggIFellesformat(fellesformat, vedleggXmlList)
+                securelog.info("vedlegg xml list for sykmeldingId $sykmeldingId is ${vedleggXmlList}")
+                leggTilVedleggIFellesformat(fellesformat, vedleggXmlList, sykmeldingId)
             } else {
                 fellesformat
             }
@@ -126,7 +129,7 @@ class SykmeldingConsumer(
         return sw.toString()
     }
 
-    fun leggTilVedleggIFellesformat(fellesformatXml: String, vedlegg: List<String>): String {
+    fun leggTilVedleggIFellesformat(fellesformatXml: String, vedlegg: List<String>, sykmeldingId: String): String {
         val insertPoint = fellesformatXml.indexOf("</ns2:Document>") + "</ns2:Document>".length
 
         if (insertPoint <= 0) throw IllegalArgumentException("Fant ikke <Document>-blokk å legge vedlegg etter")
@@ -147,7 +150,10 @@ class SykmeldingConsumer(
         """.trimIndent()
         }.joinToString("\n")
 
-        return fellesformatXml.substring(0, insertPoint) + "\n" + vedleggXml + "\n" + fellesformatXml.substring(insertPoint)
+        val vedleggMedFellesFormat = fellesformatXml.substring(0, insertPoint) + "\n" + vedleggXml + "\n" + fellesformatXml.substring(insertPoint)
+        securelog.info("vedlegg med fellesformat for sykmeldingId $sykmeldingId is $vedleggMedFellesFormat")
+
+        return vedleggMedFellesFormat
     }
 
 }
