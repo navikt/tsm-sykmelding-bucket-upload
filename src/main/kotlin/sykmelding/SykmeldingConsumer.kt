@@ -97,7 +97,7 @@ class SykmeldingConsumer(
                 fellesformat
             }
 
-            val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
+            val blob = BlobInfo.newBuilder(BlobId.of(bucketName, "$sykmeldingId/sykmelding.xml"))
                 .setContentType("application/xml")
                 .setContentEncoding("gzip")
                 .build()
