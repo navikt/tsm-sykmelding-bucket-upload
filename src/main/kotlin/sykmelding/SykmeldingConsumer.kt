@@ -137,12 +137,22 @@ class SykmeldingConsumer(
         return sw.toString()
     }
 
-    fun leggTilVedleggIFellesformat(fellesformatXml: String, vedlegg: List<String>, sykmeldingId: String): String {
+    fun leggTilVedleggIFellesformat(
+        fellesformatXml: String,
+        vedlegg: List<String>,
+        sykmeldingId: String
+    ): String {
         val insertPoint = fellesformatXml.indexOf("</ns2:Document>") + "</ns2:Document>".length
 
-        if (insertPoint <= 0) throw IllegalArgumentException("Fant ikke <Document>-blokk å legge vedlegg etter")
+        if (insertPoint <= 0) {
+            throw IllegalArgumentException("Fant ikke </ns2:Document>-blokk å legge vedlegg etter")
+        }
 
         val vedleggXml = vedlegg.mapIndexed { index, base64 ->
+            val cleanedBase64 = base64
+                .replace("""<\?xml.*?\?>""".toRegex(), "")
+                .trim()
+
             """
         <ns2:Document>
             <ns2:DocumentConnection DN="Vedlegg" V="V"/>
@@ -151,17 +161,26 @@ class SykmeldingConsumer(
                 <ns2:MimeType>application/pdf</ns2:MimeType>
                 <ns2:Description>vedlegg${index + 1}.pdf</ns2:Description>
                 <ns2:Content>
-                    <ns5:Base64Container xmlns:ns5="http://www.kith.no/xmlstds/base64container">$base64</ns5:Base64Container>
+                    <ns5:Base64Container xmlns:ns5="http://www.kith.no/xmlstds/base64container">
+                        $cleanedBase64
+                    </ns5:Base64Container>
                 </ns2:Content>
             </ns2:RefDoc>
         </ns2:Document>
         """.trimIndent()
         }.joinToString("\n")
 
-        val vedleggMedFellesFormat = fellesformatXml.substring(0, insertPoint) + "\n" + vedleggXml + "\n" + fellesformatXml.substring(insertPoint)
-        securelog.info("vedlegg med fellesformat for sykmeldingId $sykmeldingId is $vedleggMedFellesFormat")
+        val nyttXml = buildString {
+            append(fellesformatXml.substring(0, insertPoint))
+            append("\n")
+            append(vedleggXml)
+            append("\n")
+            append(fellesformatXml.substring(insertPoint))
+        }
 
-        return vedleggMedFellesFormat
+        securelog.info("Vedlegg lagt til i fellesformat for sykmeldingId $sykmeldingId:\n$nyttXml")
+
+        return nyttXml
     }
 
 }
