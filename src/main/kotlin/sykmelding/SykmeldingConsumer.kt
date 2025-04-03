@@ -16,11 +16,15 @@ import no.nav.tsm.utils.gzip
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.StringWriter
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.Marshaller
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
+
+data class EnkelVedlegg(
+    val base64: String,
+    val mimeType: String,
+    val description: String
+)
+
 
 class SykmeldingConsumer(
     val kafkaConsumer: KafkaConsumer<String, String>,
@@ -67,7 +71,6 @@ class SykmeldingConsumer(
                 val sykmeldingId = record.key()
                 val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
                 logger.info("Consumed sykmeldingId $sykmeldingId ")
-                securelog.info("Consumed sykmeldingId $sykmeldingId")
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
                     else -> uploadXml(sykmeldingId, sykmeldingRecord.fellesformat, sykmeldingRecord)
@@ -90,9 +93,9 @@ class SykmeldingConsumer(
             }
             val fellesFormatKanskjeMedVedlegg = if (!sykmeldingRecord.vedlegg.isNullOrEmpty()) {
                 logger.info("legger til vedlegg $sykmeldingId")
-                val vedleggXmlList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
-                securelog.info("vedlegg xml list for sykmeldingId $sykmeldingId is ${vedleggXmlList}")
-                leggTilVedleggIFellesformat(fellesformat, vedleggXmlList, sykmeldingId)
+                val vedleggList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
+                securelog.info("vedlegg for sykmeldingId $sykmeldingId is ${vedleggList}")
+                leggTilVedleggIFellesformat(fellesformat, vedleggList, sykmeldingId)
             } else {
                 fellesformat
             }
@@ -109,47 +112,41 @@ class SykmeldingConsumer(
         }
     }
 
-    private fun getVedlegg(key: String, sykmeldingId: String): String {
+    private fun getVedlegg(key: String, sykmeldingId: String): EnkelVedlegg {
         val vedleggBlob = storage.get(bucketNameVedlegg, key)
         if (vedleggBlob == null) {
             logger.error("Fant ikke vedlegg med key $key, sykmeldingId $sykmeldingId")
             throw RuntimeException("Fant ikke vedlegg med key $key, sykmeldingId $sykmeldingId")
-        } else {
-            logger.info("Fant vedlegg med key $key, sykmeldingId $sykmeldingId")
-            val content = vedleggBlob.getContent()
-            val contentAsString = String(content, Charsets.UTF_8)
-            securelog.info("vedlegg for sykmeldingId $sykmeldingId is $contentAsString")
-            try {
-                return toXml(objectMapper.readValue<VedleggMessage>(vedleggBlob.getContent()).vedlegg)
-            } catch (ex: Exception) {
-                logger.error("error when serializing vedlegg med key $key, sykmeldingId $sykmeldingId", ex)
-                throw RuntimeException("Error serializing vedlegg med key $key, sykmeldingId $sykmeldingId")
-            }
         }
-    }
 
-    fun toXml(obj: Any): String {
-        val jaxbContext = JAXBContext.newInstance(obj::class.java)
-        val marshaller = jaxbContext.createMarshaller()
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true)
-        val sw = StringWriter()
-        marshaller.marshal(obj, sw)
-        return sw.toString()
+        val content = vedleggBlob.getContent()
+        val contentAsString = String(content, Charsets.UTF_8)
+        securelog.info("vedlegg JSON for sykmeldingId $sykmeldingId is $contentAsString")
+
+        try {
+            val vedleggMessage = objectMapper.readValue<VedleggMessage>(content)
+            val base64 = vedleggMessage.vedlegg.content.content
+            val mimeType = vedleggMessage.vedlegg.content.contentType
+            val description = vedleggMessage.vedlegg.description
+            return EnkelVedlegg(base64 = base64, mimeType = mimeType, description = description)
+        } catch (ex: Exception) {
+            logger.error("error when parsing vedlegg for sykmeldingId $sykmeldingId", ex)
+            throw RuntimeException("Error parsing vedlegg med key $key, sykmeldingId $sykmeldingId")
+        }
     }
 
     fun leggTilVedleggIFellesformat(
         fellesformatXml: String,
-        vedlegg: List<String>,
+        vedlegg: List<EnkelVedlegg>,
         sykmeldingId: String
     ): String {
         val insertPoint = fellesformatXml.indexOf("</ns2:Document>") + "</ns2:Document>".length
-
         if (insertPoint <= 0) {
             throw IllegalArgumentException("Fant ikke </ns2:Document>-blokk å legge vedlegg etter")
         }
 
-        val vedleggXml = vedlegg.mapIndexed { index, base64 ->
-            val cleanedBase64 = base64
+        val vedleggXml = vedlegg.mapIndexed { index, vedleggObj ->
+            val cleanedBase64 = vedleggObj.base64
                 .replace("""<\?xml.*?\?>""".toRegex(), "")
                 .trim()
 
@@ -158,8 +155,8 @@ class SykmeldingConsumer(
             <ns2:DocumentConnection DN="Vedlegg" V="V"/>
             <ns2:RefDoc>
                 <ns2:MsgType DN="Vedlegg" V="A"/>
-                <ns2:MimeType>application/pdf</ns2:MimeType>
-                <ns2:Description>vedlegg${index + 1}.pdf</ns2:Description>
+                <ns2:MimeType>${vedleggObj.mimeType}</ns2:MimeType>
+                <ns2:Description>${vedleggObj.description}</ns2:Description>
                 <ns2:Content>
                     <ns5:Base64Container xmlns:ns5="http://www.kith.no/xmlstds/base64container">
                         $cleanedBase64
