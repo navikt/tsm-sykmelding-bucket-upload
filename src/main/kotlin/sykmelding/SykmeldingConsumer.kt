@@ -105,7 +105,7 @@ class SykmeldingConsumer(
             storage.create(blob, compressedData)
             STORAGE_METRIC.labels("upload").inc()
         } catch (ex: Exception) {
-            logger.error("Error deleting xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
+            logger.error("Error uploading xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
         }
     }
 
