@@ -116,7 +116,15 @@ class SykmeldingConsumer(
             throw RuntimeException("Fant ikke vedlegg med key $key, sykmeldingId $sykmeldingId")
         } else {
             logger.info("Fant vedlegg med key $key, sykmeldingId $sykmeldingId")
-            return toXml(objectMapper.readValue<VedleggMessage>(vedleggBlob.getContent()).vedlegg)
+            val content = vedleggBlob.getContent()
+            val contentAsString = String(content, Charsets.UTF_8)
+            securelog.info("vedlegg for sykmeldingId $sykmeldingId is $contentAsString")
+            try {
+                return toXml(objectMapper.readValue<VedleggMessage>(vedleggBlob.getContent()).vedlegg)
+            } catch (ex: Exception) {
+                logger.error("error when serializing vedlegg med key $key, sykmeldingId $sykmeldingId", ex)
+                throw RuntimeException("Error serializing vedlegg med key $key, sykmeldingId $sykmeldingId")
+            }
         }
     }
 
