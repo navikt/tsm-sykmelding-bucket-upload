@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <appender name="secure_log" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="secureLog" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/secure-logs/secure.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
             <fileNamePattern>/secure-logs/secure.log.%i</fileNamePattern>
@@ -14,14 +14,17 @@
             <maxIndex>1</maxIndex>
         </rollingPolicy>
         <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>50MB</maxFileSize>
+            <maxFileSize>128MB</maxFileSize>
         </triggeringPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>SECURE_LOG</marker>
+            </evaluator>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>NEUTRAL</OnMatch>
+        </filter>
     </appender>
-
-    <logger name="securelog" level="info" additivity="false">
-        <appender-ref ref="secure_log" />
-    </logger>
 
     <logger name="no.nav" level="INFO"/>
     <logger name="org.apache.kafka" level="WARN" />
@@ -30,5 +33,6 @@
 
     <root level="INFO">
         <appender-ref ref="stdout_json"/>
+        <appender-ref ref="secureLog"/>
     </root>
 </configuration>

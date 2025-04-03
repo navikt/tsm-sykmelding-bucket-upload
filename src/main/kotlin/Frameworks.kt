@@ -43,7 +43,7 @@ fun kafkaModule() = module {
             this[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             this[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
             this[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = "1"
-            this[ConsumerConfig.GROUP_ID_CONFIG] = "sykmelding-bucket-upload-consumer-2"
+            this[ConsumerConfig.GROUP_ID_CONFIG] = "sykmelding-bucket-upload-consumer-3"
         }
         val bucketName = getEnv("TSM_SYKMELDING_BUCKET")
         val bucketNamevedlegg = getEnv("SYKMELDING_VEDLEGG_BUCKET")
