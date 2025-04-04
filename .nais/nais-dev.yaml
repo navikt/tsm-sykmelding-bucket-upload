@@ -44,5 +44,4 @@ spec:
     pool: nav-dev
   envFrom:
     - secret: sykmelding-bucket
-    - secret: sykmelding-vedlegg-bucket
 

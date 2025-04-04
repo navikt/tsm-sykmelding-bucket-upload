@@ -11,7 +11,6 @@ import io.prometheus.client.Counter
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import no.nav.tsm.sykmelding.model.VedleggMessage
 import no.nav.tsm.utils.gzip
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
@@ -19,18 +18,10 @@ import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-data class EnkelVedlegg(
-    val base64: String,
-    val mimeType: String,
-    val description: String
-)
-
-
 class SykmeldingConsumer(
     val kafkaConsumer: KafkaConsumer<String, String>,
     val topics: List<String>,
     val bucketName: String,
-    val bucketNameVedlegg: String,
     val storage: Storage
 ) {
 
@@ -73,7 +64,7 @@ class SykmeldingConsumer(
                 logger.info("Consumed sykmeldingId $sykmeldingId ")
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
-                    else -> uploadXml(sykmeldingId, sykmeldingRecord.fellesformat, sykmeldingRecord)
+                    else -> uploadXml(sykmeldingId, sykmeldingRecord.fellesformat)
                 }
             }
         }
@@ -85,99 +76,25 @@ class SykmeldingConsumer(
         STORAGE_METRIC.labels("delete").inc()
     }
 
-    private fun uploadXml(sykmeldingId: String, fellesformat: String?, sykmeldingRecord: SykmeldingRecord) {
+    private fun uploadXml(sykmeldingId: String, fellesformat: String?) {
         try {
             if (fellesformat == null) {
                 STORAGE_METRIC.labels("empty").inc()
                 return
             }
-            val fellesFormatKanskjeMedVedlegg = if (!sykmeldingRecord.vedlegg.isNullOrEmpty()) {
-                logger.info("legger til vedlegg $sykmeldingId")
-                val vedleggList = sykmeldingRecord.vedlegg.map { getVedlegg(it, sykmeldingId) }
-                securelog.info("vedlegg for sykmeldingId $sykmeldingId is ${vedleggList}")
-                leggTilVedleggIFellesformat(fellesformat, vedleggList, sykmeldingId)
-            } else {
-                fellesformat
+            val sykmeldingInBucket = storage.get(bucketName, sykmeldingId)
+            if (sykmeldingInBucket == null) {
+                val blob = BlobInfo.newBuilder(BlobId.of(bucketName, "$sykmeldingId/sykmelding.xml"))
+                    .setContentType("application/xml")
+                    .setContentEncoding("gzip")
+                    .build()
+                val compressedData = gzip(fellesformat)
+                storage.create(blob, compressedData)
+                STORAGE_METRIC.labels("upload").inc()
             }
 
-            val blob = BlobInfo.newBuilder(BlobId.of(bucketName, "$sykmeldingId/sykmelding.xml"))
-                .setContentType("application/xml")
-                .setContentEncoding("gzip")
-                .build()
-            val compressedData = gzip(fellesFormatKanskjeMedVedlegg)
-            storage.create(blob, compressedData)
-            STORAGE_METRIC.labels("upload").inc()
         } catch (ex: Exception) {
             logger.error("Error uploading xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
         }
     }
-
-    private fun getVedlegg(key: String, sykmeldingId: String): EnkelVedlegg {
-        val vedleggBlob = storage.get(bucketNameVedlegg, key)
-        if (vedleggBlob == null) {
-            logger.error("Fant ikke vedlegg med key $key, sykmeldingId $sykmeldingId")
-            throw RuntimeException("Fant ikke vedlegg med key $key, sykmeldingId $sykmeldingId")
-        }
-
-        val content = vedleggBlob.getContent()
-        val contentAsString = String(content, Charsets.UTF_8)
-        securelog.info("vedlegg JSON for sykmeldingId $sykmeldingId is $contentAsString")
-
-        try {
-            val vedleggMessage = objectMapper.readValue<VedleggMessage>(content)
-            val base64 = vedleggMessage.vedlegg.content.content
-            val mimeType = vedleggMessage.vedlegg.content.contentType
-            val description = vedleggMessage.vedlegg.description
-            return EnkelVedlegg(base64 = base64, mimeType = mimeType, description = description)
-        } catch (ex: Exception) {
-            logger.error("error when parsing vedlegg for sykmeldingId $sykmeldingId", ex)
-            throw RuntimeException("Error parsing vedlegg med key $key, sykmeldingId $sykmeldingId")
-        }
-    }
-
-    fun leggTilVedleggIFellesformat(
-        fellesformatXml: String,
-        vedlegg: List<EnkelVedlegg>,
-        sykmeldingId: String
-    ): String {
-        val insertPoint = fellesformatXml.indexOf("</ns2:Document>") + "</ns2:Document>".length
-        if (insertPoint <= 0) {
-            throw IllegalArgumentException("Fant ikke </ns2:Document>-blokk å legge vedlegg etter")
-        }
-
-        val vedleggXml = vedlegg.mapIndexed { index, vedleggObj ->
-            val cleanedBase64 = vedleggObj.base64
-                .replace("""<\?xml.*?\?>""".toRegex(), "")
-                .trim()
-
-            """
-        <ns2:Document>
-            <ns2:DocumentConnection DN="Vedlegg" V="V"/>
-            <ns2:RefDoc>
-                <ns2:MsgType DN="Vedlegg" V="A"/>
-                <ns2:MimeType>${vedleggObj.mimeType}</ns2:MimeType>
-                <ns2:Description>${vedleggObj.description}</ns2:Description>
-                <ns2:Content>
-                    <ns5:Base64Container xmlns:ns5="http://www.kith.no/xmlstds/base64container">
-                        $cleanedBase64
-                    </ns5:Base64Container>
-                </ns2:Content>
-            </ns2:RefDoc>
-        </ns2:Document>
-        """.trimIndent()
-        }.joinToString("\n")
-
-        val nyttXml = buildString {
-            append(fellesformatXml.substring(0, insertPoint))
-            append("\n")
-            append(vedleggXml)
-            append("\n")
-            append(fellesformatXml.substring(insertPoint))
-        }
-
-        securelog.info("Vedlegg lagt til i fellesformat for sykmeldingId $sykmeldingId:\n$nyttXml")
-
-        return nyttXml
-    }
-
 }
