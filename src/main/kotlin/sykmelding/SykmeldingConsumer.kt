@@ -13,6 +13,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import no.nav.tsm.utils.gzip
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -26,6 +27,7 @@ class SykmeldingConsumer(
 
     companion object {
         private val logger = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
+        val securelog: Logger = LoggerFactory.getLogger("securelog")
         private val STORAGE_METRIC = Counter.Builder()
             .namespace("tsm")
             .name("sykmelding_bucket_upload")
@@ -44,7 +46,7 @@ class SykmeldingConsumer(
             try {
                 consumeMessages()
             } catch (ex: Exception) {
-                logger.error("Error processing messages", ex)
+                logger.error("Error processing messages ${ex.stackTrace} ${ex.message}", ex)
                 kafkaConsumer.unsubscribe()
                 delay(60.seconds)
             }
@@ -59,14 +61,12 @@ class SykmeldingConsumer(
             records.forEach { record ->
                 val sykmeldingId = record.key()
                 val sykmeldingRecord: SykmeldingRecord? = record.value()?.let { objectMapper.readValue(it) }
-
                 when (sykmeldingRecord) {
                     null -> deleteXml(sykmeldingId)
                     else -> uploadXml(sykmeldingId, sykmeldingRecord.fellesformat)
                 }
             }
         }
-
     }
 
     private fun deleteXml(sykmeldingId: String) {
@@ -76,17 +76,24 @@ class SykmeldingConsumer(
     }
 
     private fun uploadXml(sykmeldingId: String, fellesformat: String?) {
-        if (fellesformat != null) {
-            val blob = BlobInfo.newBuilder(BlobId.of(bucketName, sykmeldingId))
-                .setContentType("application/xml")
-                .setContentEncoding("gzip")
-                .build()
-            val compressedData = gzip(fellesformat)
-            storage.create(blob, compressedData)
-            STORAGE_METRIC.labels("upload").inc()
-        } else {
-            STORAGE_METRIC.labels("empty").inc()
+        try {
+            if (fellesformat == null) {
+                STORAGE_METRIC.labels("empty").inc()
+                return
+            }
+            val sykmeldingInBucket = storage.get(bucketName, sykmeldingId)
+            if (sykmeldingInBucket == null) {
+                val blob = BlobInfo.newBuilder(BlobId.of(bucketName, "$sykmeldingId/sykmelding.xml"))
+                    .setContentType("application/xml")
+                    .setContentEncoding("gzip")
+                    .build()
+                val compressedData = gzip(fellesformat)
+                storage.create(blob, compressedData)
+                STORAGE_METRIC.labels("upload").inc()
+            }
+
+        } catch (ex: Exception) {
+            logger.error("Error uploading xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
         }
     }
-
 }
