@@ -13,10 +13,13 @@ spec:
   replicas:
     min: 1
     max: 10
+    scalingStrategy:
+      cpu:
+        thresholdPercentage: 90
   resources:
     requests:
-      cpu: 50m
-      memory: 256Mi
+      cpu: 40m
+      memory: 400Mi
   liveness:
     path: /internal/health
   readiness:
