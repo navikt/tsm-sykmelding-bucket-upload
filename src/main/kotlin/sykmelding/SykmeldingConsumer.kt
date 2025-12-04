@@ -81,7 +81,7 @@ class SykmeldingConsumer(
                 STORAGE_METRIC.labels("empty").inc()
                 return
             }
-            val sykmeldingInBucket = storage.get(bucketName, sykmeldingId)
+            val sykmeldingInBucket = storage.get(bucketName, "$sykmeldingId/sykmelding.xml")
             if (sykmeldingInBucket == null) {
                 val blob = BlobInfo.newBuilder(BlobId.of(bucketName, "$sykmeldingId/sykmelding.xml"))
                     .setContentType("application/xml")
