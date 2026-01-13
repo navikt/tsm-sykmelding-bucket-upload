@@ -38,8 +38,6 @@ spec:
       destinations:
         - id: loki
         - id: elastic
-  secureLogs:
-    enabled: true
   kafka:
     pool: nav-dev
   envFrom:
