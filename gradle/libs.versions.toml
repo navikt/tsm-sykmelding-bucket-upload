@@ -1,14 +1,14 @@
 
 [versions]
-koin-version = "4.0.0"
-kotlin-version = "2.1.10"
-ktor-version = "3.1.1"
-logback-version = "1.5.16"
+koin-version = "4.1.1"
+kotlin-version = "2.3.0"
+ktor-version = "3.3.3"
+logback-version = "1.5.25"
 prometheus_version = "0.16.0"
-logstash_encoder_version = "8.0"
-google_storage_version = "2.50.0"
-kafka_version = "3.9.0"
-jacksonVersion = "2.18.2"
+logstash_encoder_version = "9.0"
+google_storage_version = "2.62.0"
+kafka_version = "4.1.1"
+jacksonVersion = "2.21.0"
 
 [libraries]
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor-version" }
