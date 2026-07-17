@@ -46,7 +46,7 @@ class SykmeldingConsumer(
             try {
                 consumeMessages()
             } catch (ex: Exception) {
-                logger.error("Error processing messages ${ex.stackTrace} ${ex.message}", ex)
+                logger.error("Error processing messages ${ex.message}", ex)
                 kafkaConsumer.unsubscribe()
                 delay(60.seconds)
             }
@@ -93,7 +93,7 @@ class SykmeldingConsumer(
             }
 
         } catch (ex: Exception) {
-            logger.error("Error uploading xml for sykmeldingId $sykmeldingId ${ex.message} ${ex.stackTrace}", ex)
+            logger.error("Error processing messages ${ex.message}", ex)
         }
     }
 }
