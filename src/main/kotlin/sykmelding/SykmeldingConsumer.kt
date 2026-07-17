@@ -93,7 +93,7 @@ class SykmeldingConsumer(
             }
 
         } catch (ex: Exception) {
-            logger.error("Error processing messages ${ex.message}", ex)
+            logger.error("Error uploading xml for sykmeldingId $sykmeldingId ${ex.message}", ex)
         }
     }
 }
