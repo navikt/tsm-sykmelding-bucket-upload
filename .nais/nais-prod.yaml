@@ -17,9 +17,11 @@ spec:
       cpu:
         thresholdPercentage: 90
   resources:
+    limits:
+      memory: 1024Mi
     requests:
-      cpu: 40m
-      memory: 400Mi
+      cpu: 250m
+      memory: 512Mi
   liveness:
     path: /internal/health
   readiness:
