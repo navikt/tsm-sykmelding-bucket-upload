@@ -8,6 +8,7 @@ import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
 import io.prometheus.client.Counter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -45,6 +46,9 @@ class SykmeldingConsumer(
         while (isActive) {
             try {
                 consumeMessages()
+            } catch (ex: CancellationException) {
+                logger.info("Sykmelding consumer was cancelled, shutting down")
+                throw ex
             } catch (ex: Exception) {
                 logger.error("Error processing messages ${ex.message}", ex)
                 kafkaConsumer.unsubscribe()
