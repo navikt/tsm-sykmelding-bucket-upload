@@ -1,7 +1,7 @@
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.ktor)
+    alias(ktorLibs.plugins.ktor)
 }
 
 group = "no.nav.tsm"
@@ -14,26 +14,22 @@ application {
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
-    implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.serialization.jackson)
+    implementation(ktorLibs.server.contentNegotiation)
+    implementation(ktorLibs.server.core)
+    implementation(ktorLibs.serialization.jackson)
+    implementation(ktorLibs.server.netty)
+    implementation(ktorLibs.server.config.yaml)
     implementation(libs.koin.ktor)
     implementation(libs.koin.logger.slf4j)
-    implementation(libs.ktor.server.netty)
     implementation(libs.logback.classic)
     implementation(libs.logstash.logback.encoder)
-    implementation(libs.ktor.server.config.yaml)
     implementation(libs.prometheus.client)
     implementation(libs.prometheus.hotspot)
     implementation(libs.google.cloud.storage)
     implementation(libs.apache.kafka)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.jackson.datatype.jsr310)
-    testImplementation(libs.ktor.server.test.host)
+    testImplementation(ktorLibs.server.testHost)
     testImplementation(libs.kotlin.test.junit)
 }
