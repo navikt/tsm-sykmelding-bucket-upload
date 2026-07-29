@@ -1,26 +1,19 @@
-
 [versions]
-koin-version = "4.1.1"
-kotlin-version = "2.2.21"
-logback-version = "1.5.38"
-prometheus_version = "0.16.0"
-logstash_encoder_version = "8.0"
-google_storage_version = "2.70.0"
-kafka_version = "3.9.2"
-jacksonVersion = "2.22.1"
+kotlin = "2.4.10"
+logback = "1.5.38"
+logbackEncoder = "9.0"
+prometheus = "0.16.0"
+googleStorage = "2.70.0"
+kafka = "3.9.2"
 
 [libraries]
-koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin-version" }
-koin-logger-slf4j = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin-version" }
-logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-version" }
-kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin-version" }
-prometheus-hotspot = { module = "io.prometheus:simpleclient_hotspot", version.ref = "prometheus_version" }
-prometheus-client = { module = "io.prometheus:simpleclient_common", version.ref = "prometheus_version" }
-logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash_encoder_version" }
-google-cloud-storage = { module = "com.google.cloud:google-cloud-storage", version.ref = "google_storage_version" }
-apache-kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka_version"}
-jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jacksonVersion" }
-jackson-datatype-jsr310 = { module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", version.ref = "jacksonVersion" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+prometheus-hotspot = { module = "io.prometheus:simpleclient_hotspot", version.ref = "prometheus" }
+prometheus-client = { module = "io.prometheus:simpleclient_common", version.ref = "prometheus" }
+logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logbackEncoder" }
+google-cloud-storage = { module = "com.google.cloud:google-cloud-storage", version.ref = "googleStorage" }
+apache-kafka = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka"}
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin-version" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

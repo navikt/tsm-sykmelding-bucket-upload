@@ -12,10 +12,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import no.nav.tsm.ktor.logger
 import no.nav.tsm.utils.gzip
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
@@ -25,10 +24,8 @@ class SykmeldingConsumer(
     val bucketName: String,
     val storage: Storage
 ) {
-
     companion object {
-        private val logger = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
-        val securelog: Logger = LoggerFactory.getLogger("securelog")
+        private val logger = logger()
         private val STORAGE_METRIC = Counter.Builder()
             .namespace("tsm")
             .name("sykmelding_bucket_upload")

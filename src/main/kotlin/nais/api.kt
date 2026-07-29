@@ -1,7 +1,6 @@
 package no.nav.tsm.sykmelding.nais
 
 import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respondText
 import io.ktor.server.response.respondTextWriter
 import io.ktor.server.routing.Routing

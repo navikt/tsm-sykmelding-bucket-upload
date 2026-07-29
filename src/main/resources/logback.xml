@@ -1,12 +1,21 @@
-<?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
-    <appender name="stdout_json" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider" />
-        </encoder>
-    </appender>
+    <!-- Reduces the spammy logback logging during startup -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
-	<appender name="secure_log" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <root level="INFO">
+        <appender-ref ref="STDOUT_JSON"/>
+    </root>
+
+    <logger name="teamlog" level="INFO" additivity="false">
+        <appender-ref ref="TEAM_LOG"/>
+    </logger>
+
+    <!-- Stuff we wanna squelch, use sparingly -->
+    <logger name="ch.qos.logback" level="WARN"/>
+    <logger name="io.swagger.codegen.v3.generators" level="WARN"/>
+    <logger name="org.apache.kafka" level="WARN"/>
+
+    <appender name="TEAM_LOG" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
         <destination>team-logs.nais-system:5170</destination>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>
@@ -16,16 +25,11 @@
         </encoder>
     </appender>
 
-    <logger name="securelog" level="info" additivity="false">
-        <appender-ref ref="secure_log" />
-    </logger>
-
-    <logger name="no.nav" level="INFO"/>
-    <logger name="org.apache.kafka" level="WARN" />
-    <logger name="com.zaxxer.hikari.pool" level="WARN" />
-    <logger name="io.ktor.auth" level="WARN" />
-
-    <root level="INFO">
-        <appender-ref ref="stdout_json"/>
-    </root>
+    <appender name="STDOUT_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>x_request_id</includeMdcKeyName>
+            <includeMdcKeyName>trace_id</includeMdcKeyName>
+            <includeMdcKeyName>span_id</includeMdcKeyName>
+        </encoder>
+    </appender>
 </configuration>
