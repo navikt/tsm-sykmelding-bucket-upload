@@ -8,7 +8,6 @@ metadata:
     team: tsm
     system: mottak
 spec:
-  image: {{image}}
   port: 8080
   replicas:
     min: 1
@@ -39,9 +38,6 @@ spec:
     autoInstrumentation:
       enabled: true
       runtime: java
-    logging:
-      destinations:
-        - id: loki
   kafka:
     pool: nav-dev
   envFrom:
