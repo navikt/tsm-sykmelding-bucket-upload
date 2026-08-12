@@ -91,6 +91,9 @@ class SykmeldingConsumer(
                 val compressedData = gzip(fellesformat)
                 storage.create(blob, compressedData)
                 STORAGE_METRIC.labels("upload").inc()
+                logger.info("Uploaded XML for sykmelding $sykmeldingId")
+            } else {
+                logger.info("Upload skipped for sykmelding $sykmeldingId")
             }
 
         } catch (ex: Exception) {
