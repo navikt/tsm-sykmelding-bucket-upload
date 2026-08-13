@@ -1,5 +1,10 @@
 # bucket-upload
 
+> [!WARNING]
+> **Deprecated:** The XMLs uploaded in this repo are already handled in
+> [syfosmmottak](https://github.com/navikt/syfosmmottak). This project is therefore
+> redundant and should not be used or extended further.
+
 This project was created using the [Ktor Project Generator](https://start.ktor.io).
 
 Here are some useful links to get you started:
